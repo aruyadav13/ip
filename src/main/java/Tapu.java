@@ -1,5 +1,6 @@
 import java.util.Scanner;
 
+
 public class Tapu {
     public static void main(String[] args) {
 
@@ -8,6 +9,9 @@ public class Tapu {
                 + "________________________________\n");
 
         String line;
+        String[] list = new String[100];
+        int taskCount = 0;
+
         Scanner in = new Scanner(System.in);
         while (true) {
             line = in.nextLine();
@@ -19,9 +23,21 @@ public class Tapu {
                 break;
             }
 
-            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
-                    + line + "\n"
-                    + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+            else if (line.equalsIgnoreCase("list")) {
+                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+                for (int i = 0; i < taskCount; i++) {
+                    System.out.println((i + 1) + ". " + list[i]);
+                }
+                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+            }
+
+            else {
+                list[taskCount] = line;
+                taskCount++;
+                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+                        + "added: " + line + "\n"
+                        + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+            }
         }
     }
 }
