@@ -8,6 +8,7 @@ public class Tapu {
 
     /**
      * Main entry-point for the Tapu application.
+     * Initializes the chatbot and enters the command processing loop.
      */
     public static void main(String[] args) {
         System.out.println("Hello I'm Tapu\n"
@@ -20,6 +21,7 @@ public class Tapu {
 
         Scanner in = new Scanner(System.in);
 
+        // Main command loop
         while (true) {
             line = in.nextLine();
 
@@ -42,13 +44,16 @@ public class Tapu {
                 } else if (line.startsWith("event")) {
                     taskCount = handleEvent(line, tasks, taskCount);
                 } else {
+                    // Throw exception if the command is not recognized
                     throw new TapuException("SORRY, but I don't know what that means bro");
                 }
             } catch (TapuException e) {
+                // Handle specific Tapu logic errors
                 printDivider();
                 System.out.println("??? " + e.getMessage());
                 printDivider();
             } catch (NumberFormatException e) {
+                // Handle invalid number formats (e.g., "mark xyz")
                 printDivider();
                 System.out.println("??? Please enter a valid number for the task.");
                 printDivider();
@@ -68,8 +73,14 @@ public class Tapu {
         printDivider();
     }
 
+    /**
+     * Marks a specific task as done based on the user's input.
+     *
+     * @throws TapuException If the command format is invalid or the task index is out of bounds.
+     */
     private static void handleMark(String line, Task[] tasks, int taskCount) throws TapuException {
         String[] parts = line.split(" ");
+        // Ensure there is an argument after "mark"
         if (parts.length < 2) {
             throw new TapuException("Please specify which task to mark.");
         }
@@ -86,8 +97,14 @@ public class Tapu {
         }
     }
 
+    /**
+     * Marks a specific task as not done based on the user's input.
+     *
+     * @throws TapuException If the command format is invalid or the task index is out of bounds.
+     */
     private static void handleUnmark(String line, Task[] tasks, int taskCount) throws TapuException {
         String[] parts = line.split(" ");
+        // Ensure there is an argument after "unmark"
         if (parts.length < 2) {
             throw new TapuException("Please specify which task to unmark.");
         }
@@ -104,14 +121,22 @@ public class Tapu {
         }
     }
 
+    /**
+     * Creates and adds a new Todo task.
+     *
+     * @return The updated task count.
+     * @throws TapuException If the description is empty.
+     */
     private static int handleTodo(String line, Task[] tasks, int taskCount) throws TapuException {
+        // Check if the command is just "todo" or "todo " with spaces
         if (line.trim().length() <= 4) {
             throw new TapuException("The description of a todo cannot be empty.");
         }
 
+        // Extract description starting after "todo "
         String description = line.substring(5).trim();
         if (description.isEmpty()) {
-            throw new TapuException("The description of a todo cannot be empty.");
+            throw new TapuException("The description of a todo cannot be empty bro.");
         }
 
         tasks[taskCount] = new Todo(description);
@@ -120,19 +145,29 @@ public class Tapu {
         return taskCount;
     }
 
+    /**
+     * Creates and adds a new Deadline task.
+     * Parses the description and the "/by" date.
+     *
+     * @return The updated task count.
+     * @throws TapuException If formatting is incorrect or fields are empty.
+     */
     private static int handleDeadline(String line, Task[] tasks, int taskCount) throws TapuException {
         int byIndex = line.indexOf("/by");
 
+        // Validate that the /by flag exists
         if (byIndex == -1) {
             throw new TapuException("Please include a deadline using '/by'.\n"
                     + "Usage: deadline <description> /by <date>");
         }
 
-        String description = line.substring(8, byIndex).trim(); // "deadline" is 8 chars
+        // Extract description (chars between "deadline" and "/by")
+        String description = line.substring(8, byIndex).trim();
         if (description.isEmpty()) {
-            throw new TapuException("The description of a deadline cannot be empty.");
+            throw new TapuException("The description of a deadline cannot be empty bro.");
         }
 
+        // Extract the date/time after "/by"
         String by = line.substring(byIndex + 4).trim();
         if (by.isEmpty()) {
             throw new TapuException("The date/time cannot be empty.");
@@ -144,15 +179,24 @@ public class Tapu {
         return taskCount;
     }
 
+    /**
+     * Creates and adds a new Event task.
+     * Parses the description, start time, and end time.
+     *
+     * @return The updated task count.
+     * @throws TapuException If formatting is incorrect or fields are empty.
+     */
     private static int handleEvent(String line, Task[] tasks, int taskCount) throws TapuException {
         int fromIndex = line.indexOf("/from");
         int toIndex = line.indexOf("/to");
 
+        // Validate that both flags exist
         if (fromIndex == -1 || toIndex == -1) {
             throw new TapuException("Please include both '/from' and '/to'.\n"
                     + "Usage: event <desc> /from <start> /to <end>");
         }
 
+        // Extract description, start time, and end time
         String description = line.substring(5, fromIndex).trim(); // "event" is 5 chars
         if (description.isEmpty()) {
             throw new TapuException("The description of an event cannot be empty.");
@@ -171,6 +215,9 @@ public class Tapu {
         return taskCount;
     }
 
+    /**
+     * Prints the success message when a task is successfully added.
+     */
     private static void printTaskAdded(Task task, int count) {
         printDivider();
         System.out.println("Got it. I've added this task:\n"
@@ -179,6 +226,9 @@ public class Tapu {
         printDivider();
     }
 
+    /**
+     * Prints a standard divider line to the console.
+     */
     private static void printDivider() {
         System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     }
