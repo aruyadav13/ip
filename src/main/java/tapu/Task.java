@@ -1,9 +1,11 @@
+package tapu;
+
 public class Task {
     protected String description;
     protected boolean isDone;
 
     /**
-     * Initializes a new Task with the specified description.
+     * Initializes a new tapu.Task with the specified description.
      * The task is initially marked as not done.
      *
      * @param description The description of the task.
