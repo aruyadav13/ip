@@ -1,17 +1,19 @@
+package tapu;
+
 import java.util.Scanner;
 
 /**
- * The main class for the Tapu Chatbot.
+ * The main class for the tapu.Tapu Chatbot.
  * Handles user input and manages the task list.
  */
 public class Tapu {
 
     /**
-     * Main entry-point for the Tapu application.
+     * Main entry-point for the tapu.Tapu application.
      * Initializes the chatbot and enters the command processing loop.
      */
     public static void main(String[] args) {
-        System.out.println("Hello I'm Tapu\n"
+        System.out.println("Hello I'm tapu.Tapu\n"
                 + "What can I do for you?\n"
                 + "________________________________\n");
 
@@ -48,7 +50,7 @@ public class Tapu {
                     throw new TapuException("SORRY, but I don't know what that means bro");
                 }
             } catch (TapuException e) {
-                // Handle specific Tapu logic errors
+                // Handle specific tapu.Tapu logic errors
                 printDivider();
                 System.out.println("??? " + e.getMessage());
                 printDivider();
@@ -93,7 +95,7 @@ public class Tapu {
                     + "  " + tasks[taskIndex].toString());
             printDivider();
         } else {
-            throw new TapuException("Task " + parts[1] + " does not exist.");
+            throw new TapuException("tapu.Task " + parts[1] + " does not exist.");
         }
     }
 
@@ -117,12 +119,12 @@ public class Tapu {
                     + "  " + tasks[taskIndex].toString());
             printDivider();
         } else {
-            throw new TapuException("Task " + parts[1] + " does not exist.");
+            throw new TapuException("tapu.Task " + parts[1] + " does not exist.");
         }
     }
 
     /**
-     * Creates and adds a new Todo task.
+     * Creates and adds a new tapu.Todo task.
      *
      * @return The updated task count.
      * @throws TapuException If the description is empty.
@@ -146,7 +148,7 @@ public class Tapu {
     }
 
     /**
-     * Creates and adds a new Deadline task.
+     * Creates and adds a new tapu.Deadline task.
      * Parses the description and the "/by" date.
      *
      * @return The updated task count.
@@ -180,7 +182,7 @@ public class Tapu {
     }
 
     /**
-     * Creates and adds a new Event task.
+     * Creates and adds a new tapu.Event task.
      * Parses the description, start time, and end time.
      *
      * @return The updated task count.
