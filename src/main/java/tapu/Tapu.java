@@ -1,25 +1,26 @@
 package tapu;
 
 import java.util.Scanner;
+import java.util.ArrayList;
 
 /**
- * The main class for the tapu.Tapu Chatbot.
+ * The main class for the Tapu Chatbot.
  * Handles user input and manages the task list.
  */
 public class Tapu {
 
     /**
-     * Main entry-point for the tapu.Tapu application.
+     * Main entry-point for the Tapu application.
      * Initializes the chatbot and enters the command processing loop.
      */
     public static void main(String[] args) {
-        System.out.println("Hello I'm tapu.Tapu\n"
+        System.out.println("Hello I'm Tapu\n"
                 + "What can I do for you?\n"
                 + "________________________________\n");
 
         String line;
-        Task[] tasks = new Task[100];
-        int taskCount = 0;
+        // Use ArrayList instead of a fixed Array
+        ArrayList<Task> tasks = new ArrayList<>();
 
         Scanner in = new Scanner(System.in);
 
@@ -34,23 +35,25 @@ public class Tapu {
                             + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
                     break;
                 } else if (line.equalsIgnoreCase("list")) {
-                    printList(tasks, taskCount);
+                    printList(tasks);
                 } else if (line.startsWith("mark")) {
-                    handleMark(line, tasks, taskCount);
+                    handleMark(line, tasks);
                 } else if (line.startsWith("unmark")) {
-                    handleUnmark(line, tasks, taskCount);
+                    handleUnmark(line, tasks);
+                } else if (line.startsWith("delete")) {
+                    handleDelete(line, tasks);
                 } else if (line.startsWith("todo")) {
-                    taskCount = handleTodo(line, tasks, taskCount);
+                    handleTodo(line, tasks);
                 } else if (line.startsWith("deadline")) {
-                    taskCount = handleDeadline(line, tasks, taskCount);
+                    handleDeadline(line, tasks);
                 } else if (line.startsWith("event")) {
-                    taskCount = handleEvent(line, tasks, taskCount);
+                    handleEvent(line, tasks);
                 } else {
                     // Throw exception if the command is not recognized
                     throw new TapuException("SORRY, but I don't know what that means bro");
                 }
             } catch (TapuException e) {
-                // Handle specific tapu.Tapu logic errors
+                // Handle specific Tapu logic errors
                 printDivider();
                 System.out.println("??? " + e.getMessage());
                 printDivider();
@@ -66,11 +69,11 @@ public class Tapu {
     /**
      * Prints all tasks currently in the list.
      */
-    private static void printList(Task[] tasks, int taskCount) {
+    private static void printList(ArrayList<Task> tasks) {
         printDivider();
         System.out.println("Here are the tasks in your list:");
-        for (int i = 0; i < taskCount; i++) {
-            System.out.println((i + 1) + "." + tasks[i].toString());
+        for (int i = 0; i < tasks.size(); i++) {
+            System.out.println((i + 1) + "." + tasks.get(i).toString());
         }
         printDivider();
     }
@@ -80,7 +83,7 @@ public class Tapu {
      *
      * @throws TapuException If the command format is invalid or the task index is out of bounds.
      */
-    private static void handleMark(String line, Task[] tasks, int taskCount) throws TapuException {
+    private static void handleMark(String line, ArrayList<Task> tasks) throws TapuException {
         String[] parts = line.split(" ");
         // Ensure there is an argument after "mark"
         if (parts.length < 2) {
@@ -88,14 +91,14 @@ public class Tapu {
         }
         int taskIndex = Integer.parseInt(parts[1]) - 1;
 
-        if (taskIndex >= 0 && taskIndex < taskCount) {
-            tasks[taskIndex].markAsDone();
+        if (taskIndex >= 0 && taskIndex < tasks.size()) {
+            tasks.get(taskIndex).markAsDone();
             printDivider();
             System.out.println("Nice! I've marked this task as done:\n"
-                    + "  " + tasks[taskIndex].toString());
+                    + "  " + tasks.get(taskIndex).toString());
             printDivider();
         } else {
-            throw new TapuException("tapu.Task " + parts[1] + " does not exist.");
+            throw new TapuException("Task " + parts[1] + " does not exist.");
         }
     }
 
@@ -104,7 +107,7 @@ public class Tapu {
      *
      * @throws TapuException If the command format is invalid or the task index is out of bounds.
      */
-    private static void handleUnmark(String line, Task[] tasks, int taskCount) throws TapuException {
+    private static void handleUnmark(String line, ArrayList<Task> tasks) throws TapuException {
         String[] parts = line.split(" ");
         // Ensure there is an argument after "unmark"
         if (parts.length < 2) {
@@ -112,24 +115,48 @@ public class Tapu {
         }
         int taskIndex = Integer.parseInt(parts[1]) - 1;
 
-        if (taskIndex >= 0 && taskIndex < taskCount) {
-            tasks[taskIndex].markAsNotDone();
+        if (taskIndex >= 0 && taskIndex < tasks.size()) {
+            tasks.get(taskIndex).markAsNotDone();
             printDivider();
             System.out.println("OK, I've marked this task as not done yet:\n"
-                    + "  " + tasks[taskIndex].toString());
+                    + "  " + tasks.get(taskIndex).toString());
             printDivider();
         } else {
-            throw new TapuException("tapu.Task " + parts[1] + " does not exist.");
+            throw new TapuException("Task " + parts[1] + " does not exist.");
         }
     }
 
     /**
-     * Creates and adds a new tapu.Todo task.
+     * Deletes a specific task from the list based on the user's input.
      *
-     * @return The updated task count.
+     * @throws TapuException If the command format is invalid or the task index is out of bounds.
+     */
+    private static void handleDelete(String line, ArrayList<Task> tasks) throws TapuException {
+        String[] parts = line.split(" ");
+        // Ensure there is an argument after "delete"
+        if (parts.length < 2) {
+            throw new TapuException("Please specify which task to delete.");
+        }
+        int taskIndex = Integer.parseInt(parts[1]) - 1;
+
+        if (taskIndex >= 0 && taskIndex < tasks.size()) {
+            Task removedTask = tasks.remove(taskIndex);
+            printDivider();
+            System.out.println("Noted. I've removed this task:\n"
+                    + "  " + removedTask.toString() + "\n"
+                    + "Now you have " + tasks.size() + " tasks in the list.");
+            printDivider();
+        } else {
+            throw new TapuException("Task " + parts[1] + " does not exist.");
+        }
+    }
+
+    /**
+     * Creates and adds a new Todo task.
+     *
      * @throws TapuException If the description is empty.
      */
-    private static int handleTodo(String line, Task[] tasks, int taskCount) throws TapuException {
+    private static void handleTodo(String line, ArrayList<Task> tasks) throws TapuException {
         // Check if the command is just "todo" or "todo " with spaces
         if (line.trim().length() <= 4) {
             throw new TapuException("The description of a todo cannot be empty.");
@@ -141,20 +168,17 @@ public class Tapu {
             throw new TapuException("The description of a todo cannot be empty bro.");
         }
 
-        tasks[taskCount] = new Todo(description);
-        taskCount++;
-        printTaskAdded(tasks[taskCount - 1], taskCount);
-        return taskCount;
+        tasks.add(new Todo(description));
+        printTaskAdded(tasks.get(tasks.size() - 1), tasks.size());
     }
 
     /**
-     * Creates and adds a new tapu.Deadline task.
+     * Creates and adds a new Deadline task.
      * Parses the description and the "/by" date.
      *
-     * @return The updated task count.
      * @throws TapuException If formatting is incorrect or fields are empty.
      */
-    private static int handleDeadline(String line, Task[] tasks, int taskCount) throws TapuException {
+    private static void handleDeadline(String line, ArrayList<Task> tasks) throws TapuException {
         int byIndex = line.indexOf("/by");
 
         // Validate that the /by flag exists
@@ -175,20 +199,17 @@ public class Tapu {
             throw new TapuException("The date/time cannot be empty.");
         }
 
-        tasks[taskCount] = new Deadline(description, by);
-        taskCount++;
-        printTaskAdded(tasks[taskCount - 1], taskCount);
-        return taskCount;
+        tasks.add(new Deadline(description, by));
+        printTaskAdded(tasks.get(tasks.size() - 1), tasks.size());
     }
 
     /**
-     * Creates and adds a new tapu.Event task.
+     * Creates and adds a new Event task.
      * Parses the description, start time, and end time.
      *
-     * @return The updated task count.
      * @throws TapuException If formatting is incorrect or fields are empty.
      */
-    private static int handleEvent(String line, Task[] tasks, int taskCount) throws TapuException {
+    private static void handleEvent(String line, ArrayList<Task> tasks) throws TapuException {
         int fromIndex = line.indexOf("/from");
         int toIndex = line.indexOf("/to");
 
@@ -211,10 +232,8 @@ public class Tapu {
             throw new TapuException("The start and end times cannot be empty.");
         }
 
-        tasks[taskCount] = new Event(description, from, to);
-        taskCount++;
-        printTaskAdded(tasks[taskCount - 1], taskCount);
-        return taskCount;
+        tasks.add(new Event(description, from, to));
+        printTaskAdded(tasks.get(tasks.size() - 1), tasks.size());
     }
 
     /**
