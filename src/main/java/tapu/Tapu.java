@@ -1,31 +1,41 @@
 package tapu;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
 /**
- * The main class for the tapu.Tapu Chatbot.
- * Handles user input and manages the task list.
+ * The main class for the Tapu Chatbot.
+ * Handles user input, manages the task list, and handles file storage.
  */
 public class Tapu {
 
+    private static final String FILE_PATH = "./data/tapu.txt";
+    private static final String DIR_PATH = "./data";
+
     /**
-     * Main entry-point for the tapu.Tapu application.
+     * Main entry-point for the Tapu application.
      * Initializes the chatbot and enters the command processing loop.
      */
     public static void main(String[] args) {
-        System.out.println("Hello I'm tapu.Tapu\n"
+        System.out.println("Hello I'm Tapu\n"
                 + "What can I do for you?\n"
                 + "________________________________\n");
 
         String line;
         Task[] tasks = new Task[100];
-        int taskCount = 0;
+
+        // Load data from hard disk on startup
+        int taskCount = loadData(tasks);
 
         Scanner in = new Scanner(System.in);
 
         // Main command loop
         while (true) {
             line = in.nextLine();
+            boolean isChanged = false; // Tracks if we need to save to disk
 
             try {
                 if (line.equalsIgnoreCase("bye")) {
@@ -37,25 +47,33 @@ public class Tapu {
                     printList(tasks, taskCount);
                 } else if (line.startsWith("mark")) {
                     handleMark(line, tasks, taskCount);
+                    isChanged = true;
                 } else if (line.startsWith("unmark")) {
                     handleUnmark(line, tasks, taskCount);
+                    isChanged = true;
                 } else if (line.startsWith("todo")) {
                     taskCount = handleTodo(line, tasks, taskCount);
+                    isChanged = true;
                 } else if (line.startsWith("deadline")) {
                     taskCount = handleDeadline(line, tasks, taskCount);
+                    isChanged = true;
                 } else if (line.startsWith("event")) {
                     taskCount = handleEvent(line, tasks, taskCount);
+                    isChanged = true;
                 } else {
-                    // Throw exception if the command is not recognized
                     throw new TapuException("SORRY, but I don't know what that means bro");
                 }
+
+                // Save automatically if the list was modified
+                if (isChanged) {
+                    saveData(tasks, taskCount);
+                }
+
             } catch (TapuException e) {
-                // Handle specific tapu.Tapu logic errors
                 printDivider();
                 System.out.println("??? " + e.getMessage());
                 printDivider();
             } catch (NumberFormatException e) {
-                // Handle invalid number formats (e.g., "mark xyz")
                 printDivider();
                 System.out.println("??? Please enter a valid number for the task.");
                 printDivider();
@@ -63,9 +81,108 @@ public class Tapu {
         }
     }
 
+    // ==========================================
+    // FILE I/O METHODS (LEVEL 7)
+    // ==========================================
+
     /**
-     * Prints all tasks currently in the list.
+     * Loads tasks from the data file on startup.
      */
+    private static int loadData(Task[] tasks) {
+        int count = 0;
+        try {
+            File f = new File(FILE_PATH);
+            if (!f.exists()) {
+                return 0; // File doesn't exist yet, nothing to load
+            }
+            Scanner s = new Scanner(f);
+            while (s.hasNext()) {
+                String line = s.nextLine();
+                String[] parts = line.split(" \\| ");
+                if (parts.length < 3) continue;
+
+                String type = parts[0];
+                boolean isDone = parts[1].equals("1");
+                String desc = parts[2];
+
+                Task task = null;
+                if (type.equals("T")) {
+                    task = new Todo(desc);
+                } else if (type.equals("D") && parts.length >= 4) {
+                    task = new Deadline(desc, parts[3]);
+                } else if (type.equals("E") && parts.length >= 5) {
+                    task = new Event(desc, parts[3], parts[4]);
+                }
+
+                if (task != null) {
+                    if (isDone) {
+                        task.markAsDone();
+                    }
+                    tasks[count] = task;
+                    count++;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Error loading file: " + e.getMessage());
+        }
+        return count;
+    }
+
+    /**
+     * Saves the current task list to the data file.
+     */
+    private static void saveData(Task[] tasks, int taskCount) {
+        try {
+            // Create directory if it doesn't exist
+            File dir = new File(DIR_PATH);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            FileWriter fw = new FileWriter(FILE_PATH);
+            for (int i = 0; i < taskCount; i++) {
+                fw.write(taskToFileString(tasks[i]) + System.lineSeparator());
+            }
+            fw.close();
+        } catch (IOException e) {
+            System.out.println("Error saving data: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Converts a Task object into a formatted string for file storage.
+     */
+    private static String taskToFileString(Task task) {
+        String str = task.toString();
+        // Parse the toString output: e.g., "[D][X] return book (by: June 6th)"
+        String status = str.substring(4, 5).equals("X") ? "1" : "0";
+        String description = str.substring(7);
+
+        if (task instanceof Deadline) {
+            int byIndex = description.lastIndexOf(" (by: ");
+            if (byIndex != -1) {
+                String desc = description.substring(0, byIndex);
+                String by = description.substring(byIndex + 6, description.length() - 1);
+                return "D | " + status + " | " + desc + " | " + by;
+            }
+        } else if (task instanceof Event) {
+            int fromIndex = description.lastIndexOf(" (from: ");
+            int toIndex = description.lastIndexOf(" to: ");
+            if (fromIndex != -1 && toIndex != -1) {
+                String desc = description.substring(0, fromIndex);
+                String from = description.substring(fromIndex + 8, toIndex);
+                String to = description.substring(toIndex + 5, description.length() - 1);
+                return "E | " + status + " | " + desc + " | " + from + " | " + to;
+            }
+        }
+        // Default to Todo format
+        return "T | " + status + " | " + description;
+    }
+
+    // ==========================================
+    // BOT LOGIC METHODS
+    // ==========================================
+
     private static void printList(Task[] tasks, int taskCount) {
         printDivider();
         System.out.println("Here are the tasks in your list:");
@@ -75,14 +192,8 @@ public class Tapu {
         printDivider();
     }
 
-    /**
-     * Marks a specific task as done based on the user's input.
-     *
-     * @throws TapuException If the command format is invalid or the task index is out of bounds.
-     */
     private static void handleMark(String line, Task[] tasks, int taskCount) throws TapuException {
         String[] parts = line.split(" ");
-        // Ensure there is an argument after "mark"
         if (parts.length < 2) {
             throw new TapuException("Please specify which task to mark.");
         }
@@ -95,18 +206,12 @@ public class Tapu {
                     + "  " + tasks[taskIndex].toString());
             printDivider();
         } else {
-            throw new TapuException("tapu.Task " + parts[1] + " does not exist.");
+            throw new TapuException("Task " + parts[1] + " does not exist.");
         }
     }
 
-    /**
-     * Marks a specific task as not done based on the user's input.
-     *
-     * @throws TapuException If the command format is invalid or the task index is out of bounds.
-     */
     private static void handleUnmark(String line, Task[] tasks, int taskCount) throws TapuException {
         String[] parts = line.split(" ");
-        // Ensure there is an argument after "unmark"
         if (parts.length < 2) {
             throw new TapuException("Please specify which task to unmark.");
         }
@@ -119,23 +224,15 @@ public class Tapu {
                     + "  " + tasks[taskIndex].toString());
             printDivider();
         } else {
-            throw new TapuException("tapu.Task " + parts[1] + " does not exist.");
+            throw new TapuException("Task " + parts[1] + " does not exist.");
         }
     }
 
-    /**
-     * Creates and adds a new tapu.Todo task.
-     *
-     * @return The updated task count.
-     * @throws TapuException If the description is empty.
-     */
     private static int handleTodo(String line, Task[] tasks, int taskCount) throws TapuException {
-        // Check if the command is just "todo" or "todo " with spaces
         if (line.trim().length() <= 4) {
             throw new TapuException("The description of a todo cannot be empty.");
         }
 
-        // Extract description starting after "todo "
         String description = line.substring(5).trim();
         if (description.isEmpty()) {
             throw new TapuException("The description of a todo cannot be empty bro.");
@@ -147,29 +244,19 @@ public class Tapu {
         return taskCount;
     }
 
-    /**
-     * Creates and adds a new tapu.Deadline task.
-     * Parses the description and the "/by" date.
-     *
-     * @return The updated task count.
-     * @throws TapuException If formatting is incorrect or fields are empty.
-     */
     private static int handleDeadline(String line, Task[] tasks, int taskCount) throws TapuException {
         int byIndex = line.indexOf("/by");
 
-        // Validate that the /by flag exists
         if (byIndex == -1) {
             throw new TapuException("Please include a deadline using '/by'.\n"
                     + "Usage: deadline <description> /by <date>");
         }
 
-        // Extract description (chars between "deadline" and "/by")
         String description = line.substring(8, byIndex).trim();
         if (description.isEmpty()) {
             throw new TapuException("The description of a deadline cannot be empty bro.");
         }
 
-        // Extract the date/time after "/by"
         String by = line.substring(byIndex + 4).trim();
         if (by.isEmpty()) {
             throw new TapuException("The date/time cannot be empty.");
@@ -181,25 +268,16 @@ public class Tapu {
         return taskCount;
     }
 
-    /**
-     * Creates and adds a new tapu.Event task.
-     * Parses the description, start time, and end time.
-     *
-     * @return The updated task count.
-     * @throws TapuException If formatting is incorrect or fields are empty.
-     */
     private static int handleEvent(String line, Task[] tasks, int taskCount) throws TapuException {
         int fromIndex = line.indexOf("/from");
         int toIndex = line.indexOf("/to");
 
-        // Validate that both flags exist
         if (fromIndex == -1 || toIndex == -1) {
             throw new TapuException("Please include both '/from' and '/to'.\n"
                     + "Usage: event <desc> /from <start> /to <end>");
         }
 
-        // Extract description, start time, and end time
-        String description = line.substring(5, fromIndex).trim(); // "event" is 5 chars
+        String description = line.substring(5, fromIndex).trim();
         if (description.isEmpty()) {
             throw new TapuException("The description of an event cannot be empty.");
         }
@@ -217,9 +295,6 @@ public class Tapu {
         return taskCount;
     }
 
-    /**
-     * Prints the success message when a task is successfully added.
-     */
     private static void printTaskAdded(Task task, int count) {
         printDivider();
         System.out.println("Got it. I've added this task:\n"
@@ -228,9 +303,6 @@ public class Tapu {
         printDivider();
     }
 
-    /**
-     * Prints a standard divider line to the console.
-     */
     private static void printDivider() {
         System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     }
