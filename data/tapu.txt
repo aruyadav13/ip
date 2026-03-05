@@ -1,3 +1,6 @@
 E | 0 | shsh | 7 | 8
 D | 0 | eat | 9
 T | 1 | shs
+T | 0 | jsjs
+D | 0 | ssj | 23-3-20
+D | 0 | submit homework | Oct 15 2026
