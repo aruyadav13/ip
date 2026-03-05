@@ -8,24 +8,36 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * Handles loading tasks from the file and saving tasks to the file.
+ * Handles loading tasks from the hard drive and saving tasks back to it.
  */
 public class Storage {
     private String filePath;
     private String dirPath;
 
+    /**
+     * Constructs a Storage instance with the specified file path.
+     * Automatically determines the directory path from the file path.
+     *
+     * @param filePath The relative or absolute path to the save file.
+     */
     public Storage(String filePath) {
         this.filePath = filePath;
         File f = new File(filePath);
-        this.dirPath = f.getParent(); // Gets the "./data" part automatically
+        this.dirPath = f.getParent();
     }
 
+    /**
+     * Loads tasks from the save file into an ArrayList.
+     *
+     * @return An ArrayList containing the parsed Task objects from the file.
+     * @throws TapuException If there is an issue locating or reading the file.
+     */
     public ArrayList<Task> load() throws TapuException {
         ArrayList<Task> loadedTasks = new ArrayList<>();
         try {
             File f = new File(filePath);
             if (!f.exists()) {
-                return loadedTasks; // File doesn't exist yet, return empty list
+                return loadedTasks;
             }
             Scanner s = new Scanner(f);
             while (s.hasNext()) {
@@ -59,6 +71,13 @@ public class Storage {
         return loadedTasks;
     }
 
+    /**
+     * Saves the current list of tasks to the hard drive.
+     * Creates the necessary directories if they do not exist.
+     *
+     * @param tasks The ArrayList of Task objects to save.
+     * @throws TapuException If there is an error writing to the file.
+     */
     public void save(ArrayList<Task> tasks) throws TapuException {
         try {
             File dir = new File(dirPath);
@@ -75,6 +94,12 @@ public class Storage {
         }
     }
 
+    /**
+     * Converts a Task object into a formatted string suitable for text file storage.
+     *
+     * @param task The Task object to convert.
+     * @return A pipe-separated string representing the task's type, status, and details.
+     */
     private String taskToFileString(Task task) {
         String str = task.toString();
         String status = str.substring(4, 5).equals("X") ? "1" : "0";
