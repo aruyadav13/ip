@@ -42,6 +42,12 @@ public class Parser {
         } else if (commandWord.equals("event")) {
             String[] parts = parseEvent(fullCommand);
             return new AddCommand(new Event(parts[0], parts[1], parts[2]));
+        } else if (commandWord.equals("find")) {
+            String keyword = fullCommand.substring(4).trim();
+            if (keyword.isEmpty()) {
+                throw new TapuException("The keyword for find cannot be empty.");
+            }
+            return new FindCommand(keyword);
         } else {
             throw new TapuException("SORRY, but I don't know what that means bro");
         }
